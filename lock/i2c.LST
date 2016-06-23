@@ -1,0 +1,174 @@
+C51 COMPILER V7.10   I2C                                                                   06/22/2016 18:20:47 PAGE 1   
+
+
+C51 COMPILER V7.10, COMPILATION OF MODULE I2C
+OBJECT MODULE PLACED IN i2c.OBJ
+COMPILER INVOKED BY: D:\Program Files\keil\C51\BIN\C51.EXE i2c.c OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /* FROM 普中科技 */
+   2          #include"i2c.h"
+   3          
+   4          /*******************************************************************************
+   5          * 函 数 名         : Delay10us()
+   6          * 函数功能                 : 延时
+   7          * 输    入         : 无
+   8          * 输    出         : 无
+   9          *******************************************************************************/
+  10          
+  11          void I2C_Delay10us()
+  12          {
+  13   1              uchar a, b;
+  14   1              for(b=1; b>0; b--)
+  15   1              {
+  16   2                      for(a=2; a>0; a--);
+  17   2              }
+  18   1      }
+  19          /*******************************************************************************
+  20          * 函 数 名         : I2C_Start()
+  21          * 函数功能                 : 起始信号：在I2C_SCL时钟信号在高电平期间I2C_SDA信号产生一个下降沿
+  22          * 输    入         : 无
+  23          * 输    出         : 无
+  24          * 备    注         : 起始之后I2C_SDA和I2C_SCL都为0
+  25          *******************************************************************************/
+  26          
+  27          void I2C_Start()
+  28          {
+  29   1              I2C_SDA = 1;
+  30   1              I2C_Delay10us();
+  31   1              I2C_SCL = 1;
+  32   1              I2C_Delay10us();//建立时间是I2C_SDA保持时间>4.7us
+  33   1              I2C_SDA = 0;
+  34   1              I2C_Delay10us();//保持时间是>4us
+  35   1              I2C_SCL = 0;                    
+  36   1              I2C_Delay10us();                
+  37   1      }
+  38          /*******************************************************************************
+  39          * 函 数 名           : I2C_Stop()
+  40          * 函数功能               : 终止信号：在I2C_SCL时钟信号高电平期间I2C_SDA信号产生一个上升沿
+  41          * 输    入           : 无
+  42          * 输    出               : 无
+  43          * 备    注           : 结束之后保持I2C_SDA和I2C_SCL都为1；表示总线空闲
+  44          *******************************************************************************/
+  45          
+  46          void I2C_Stop()
+  47          {
+  48   1              I2C_SDA = 0;
+  49   1              I2C_Delay10us();
+  50   1              I2C_SCL = 1;
+  51   1              I2C_Delay10us();//建立时间大于4.7us
+  52   1              I2C_SDA = 1;
+  53   1              I2C_Delay10us();                
+  54   1      }
+  55          /*******************************************************************************
+C51 COMPILER V7.10   I2C                                                                   06/22/2016 18:20:47 PAGE 2   
+
+  56          * 函 数 名           : I2cSendByte(uchar num)
+  57          * 函数功能               : 通过I2C发送一个字节。在I2C_SCL时钟信号高电平期间，
+  58          *                    * 保持发送信号I2C_SDA保持稳定
+  59          * 输    入           : num ,ack
+  60          * 输    出               : 0或1。发送成功返回1，发送失败返回0
+  61          * 备    注           : 发送完一个字节I2C_SCL=0, 需要应答则应答设置为1，否则为0
+  62          *******************************************************************************/
+  63          
+  64          uchar I2C_SendByte(uchar dat, uchar ack)
+  65          {
+  66   1              uchar a = 0,b = 0;//最大255，一个机器周期为1us，最大延时255us。
+  67   1                              
+  68   1              for(a=0; a<8; a++)//要发送8位，从最高位开始
+  69   1              {
+  70   2                      I2C_SDA = dat >> 7;      //起始信号之后I2C_SCL=0，所以可以直接改变I2C_SDA信号
+  71   2                      dat = dat << 1;
+  72   2                      I2C_Delay10us();
+  73   2                      I2C_SCL = 1;
+  74   2                      I2C_Delay10us();//建立时间>4.7us
+  75   2                      I2C_SCL = 0;
+  76   2                      I2C_Delay10us();//时间大于4us           
+  77   2              }
+  78   1      
+  79   1              I2C_SDA = 1;
+  80   1              I2C_Delay10us();
+  81   1              I2C_SCL = 1;
+  82   1              while(I2C_SDA && (ack == 1))//等待应答，也就是等待从设备把I2C_SDA拉低
+  83   1              {
+  84   2                      b++;
+  85   2                      if(b > 200)      //如果超过200us没有应答发送失败，或者为非应答，表示接收结束
+  86   2                      {
+  87   3                              I2C_SCL = 0;
+  88   3                              I2C_Delay10us();
+  89   3                              return 0;
+  90   3                      }
+  91   2              }
+  92   1      
+  93   1              I2C_SCL = 0;
+  94   1              I2C_Delay10us();
+  95   1              return 1;               
+  96   1      }
+  97          /*******************************************************************************
+  98          * 函 数 名           : I2cReadByte()
+  99          * 函数功能               : 使用I2c读取一个字节
+ 100          * 输    入           : 无
+ 101          * 输    出               : dat
+ 102          * 备    注           : 接收完一个字节I2C_SCL=0
+ 103          *******************************************************************************/
+ 104          
+ 105          uchar I2C_ReadByte()
+ 106          {
+ 107   1              uchar a = 0,dat = 0;
+ 108   1              I2C_SDA = 1;                    //起始和发送一个字节之后I2C_SCL都是0
+ 109   1              I2C_Delay10us();
+ 110   1              for(a=0; a<8; a++)//接收8个字节
+ 111   1              {
+ 112   2                      I2C_SCL = 1;
+ 113   2                      I2C_Delay10us();
+ 114   2                      dat <<= 1;
+ 115   2                      dat |= I2C_SDA;
+ 116   2                      I2C_Delay10us();
+ 117   2                      I2C_SCL = 0;
+C51 COMPILER V7.10   I2C                                                                   06/22/2016 18:20:47 PAGE 3   
+
+ 118   2                      I2C_Delay10us();
+ 119   2              }
+ 120   1              return dat;             
+ 121   1      }
+ 122          
+ 123          
+ 124          /*******************
+ 125           * EEPROM 读写函数 *
+ 126           *******************/
+ 127          void At24c02Write(unsigned char addr,unsigned char dat)
+ 128          {
+ 129   1              I2C_Start();
+ 130   1              I2C_SendByte(0xa0, 1);//发送写器件地址
+ 131   1              I2C_SendByte(addr, 1);//发送要写入内存地址
+ 132   1              I2C_SendByte(dat, 0);   //发送数据
+ 133   1              I2C_Stop();
+ 134   1      }
+ 135          unsigned char At24c02Read(unsigned char addr)
+ 136          {
+ 137   1              unsigned char num;
+ 138   1              I2C_Start();
+ 139   1              I2C_SendByte(0xa0, 1); //发送写器件地址
+ 140   1              I2C_SendByte(addr, 1); //发送要读取的地址
+ 141   1              I2C_Start();
+ 142   1              I2C_SendByte(0xa1, 1); //发送读器件地址
+ 143   1              num=I2C_ReadByte(); //读取数据
+ 144   1              I2C_Stop();
+ 145   1              return num;     
+ 146   1      }
+ 147           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    211    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

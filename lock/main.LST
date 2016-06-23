@@ -1,0 +1,372 @@
+C51 COMPILER V7.10   MAIN                                                                  06/22/2016 18:20:46 PAGE 1   
+
+
+C51 COMPILER V7.10, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Program Files\keil\C51\BIN\C51.EXE main.c OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include<reg51.h>
+   2          #include<intrins.h>
+   3          #include"ccl.h"
+   4          #include"i2c.h"  //I2C串行总线相关
+   5          
+   6          //--定义全局变量--//
+   7          unsigned char code DIG_CODE[17]={
+   8          0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
+   9          0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};
+  10          //0、1、2、3、4、5、6、7、8、9、A、b、C、d、E、F的显示码
+  11          unsigned char DisplayData[8];
+  12          //用来存放要显示的8位数的值
+  13          
+  14          
+  15          main()
+  16          {
+  17   1              long password;
+  18   1              char model=MD_NORM; //见ccl.h
+  19   1              initialize(&password);
+  20   1              while(1){
+  21   2                      MSG msg={0,0};
+  22   2                      inputModu(&model,&msg);
+  23   2                      operatModu(&model,msg,&password);
+  24   2              }
+  25   1              return 0;
+  26   1      }
+  27          
+  28          void initialize(long *Ppassword)
+  29          {
+  30   1              RELAY=1;
+  31   1              DisplayData[0]=0x00;
+  32   1              DisplayData[1]=0x00;
+  33   1              DisplayData[2]=0x00;
+  34   1              DisplayData[3]=0x00;
+  35   1              DisplayData[4]=0x00;
+  36   1              DisplayData[5]=0x00;
+  37   1              DisplayData[6]=0x00;
+  38   1              DisplayData[7]=0x00;
+  39   1              DigDisplay(8);
+  40   1              readPassword(Ppassword);
+  41   1      }
+  42          
+  43          void inputModu(char *pmodel,MSG *pmsg)
+  44          {
+  45   1              static char premodel=1;
+  46   1              if((*pmodel)&MD_ERRO){
+  47   2                      if(K_BACK==KeyScan()){
+  48   3                              *pmodel &= ~MD_ERRO;
+  49   3                      }
+  50   2              }
+  51   1              else if((*pmodel)&MD_COMI){
+  52   2                      
+  53   2              }
+  54   1              else {
+  55   2                      char KeyVal=KeyScan();
+C51 COMPILER V7.10   MAIN                                                                  06/22/2016 18:20:46 PAGE 2   
+
+  56   2                      if(KeyVal){
+  57   3                              if((KeyVal&0x03)==0){
+  58   4                                      pmsg->param |= MG_CONTROL;
+  59   4                                      pmsg->mdata=KeyVal>>2;
+  60   4                                      /*if(KeyVal==K_SHOW){
+  61   4                                              pmsg->param &= ~MG_REPAINT;
+  62   4                                      }*/
+  63   4                              }
+  64   3                              else if(KeyVal==K_CLS || KeyVal==K_DEL){
+  65   4                                      pmsg->param |= MG_CONTROL;
+  66   4                                      pmsg->mdata=KeyVal-9;
+  67   4                              }
+  68   3                              else {
+  69   4                                      pmsg->param |= MG_NUMBER;
+  70   4                                      pmsg->mdata=(KeyVal-(KeyVal>>2))%10;
+  71   4                              }
+  72   3                      }
+  73   2              }
+  74   1              if(premodel!=*pmodel){
+  75   2                      pmsg->param |= MG_REPAINT;
+  76   2              }
+  77   1              premodel=*pmodel;
+  78   1      }
+  79          
+  80          void operatModu(char *pmodel,MSG msg,long *Ppassword)
+  81          {
+  82   1              static char digit=0;
+  83   1              static long buf=0;
+  84   1              if((*pmodel)&MD_ERRO){
+  85   2                      operatError(msg.param);
+  86   2              }
+  87   1              else if((*pmodel)&MD_COMI){
+  88   2                      
+  89   2              }
+  90   1              else {
+  91   2                      if(msg.param&MG_CONTROL){
+  92   3                              switch(msg.mdata){
+  93   4                                      case(K_CHAN/4): 
+  94   4                                              if(((*pmodel)&MD_CONF)==0){
+  95   5                                                      *pmodel |= MD_ORGN;
+  96   5                                              }
+  97   4                                      break;
+  98   4                                      case(K_SHOW/4): *pmodel |= MD_SHOW; break;
+  99   4                                      case(K_BACK/4): *pmodel &= MD_NORM; break;
+ 100   4                                      case(K_CONF/4): operatConfirm(pmodel,&digit,&buf,Ppassword);    break;
+ 101   4                                      case(K_DEL-9):  
+ 102   4                                              if(digit>0){
+ 103   5                                                      --digit; buf/=10;
+ 104   5                                              }
+ 105   4                                      break;
+ 106   4                                      case(K_CLS-9):  digit=0; buf=0; break;
+ 107   4                              }
+ 108   3                      }
+ 109   2                      else if(msg.param&MG_NUMBER){
+ 110   3                              if(digit<8){
+ 111   4                                      ++digit;
+ 112   4                                      buf=buf*10+msg.mdata;
+ 113   4                              }
+ 114   3                      }
+ 115   2                      if(!(msg.param&MG_CONTROL)||(msg.mdata!=K_SHOW/4)){
+ 116   3                              (*pmodel) &= ~MD_SHOW;
+ 117   3                      }
+C51 COMPILER V7.10   MAIN                                                                  06/22/2016 18:20:46 PAGE 3   
+
+ 118   2                      if(msg.param&MG_REPAINT){
+ 119   3                              if((*pmodel)&MD_SHOW){
+ 120   4                                      DisplayData[0]=DIG_CODE[buf%10];
+ 121   4                                      DisplayData[1]=DIG_CODE[buf%100/10];
+ 122   4                                      DisplayData[2]=DIG_CODE[buf%1000/100];
+ 123   4                                      DisplayData[3]=DIG_CODE[buf%10000/1000];
+ 124   4                                      DisplayData[4]=DIG_CODE[buf%100000/10000];
+ 125   4                                      DisplayData[5]=DIG_CODE[buf%1000000/100000];
+ 126   4                                      DisplayData[6]=DIG_CODE[buf%10000000/1000000];
+ 127   4                                      DisplayData[7]=DIG_CODE[buf%100000000/10000000];
+ 128   4                              }
+ 129   3                              else {
+ 130   4                                      DisplayData[0]=0x40; //"-"
+ 131   4                                      DisplayData[1]=0x40;
+ 132   4                                      DisplayData[2]=0x40;
+ 133   4                                      DisplayData[3]=0x40;
+ 134   4                                      DisplayData[4]=0x40;
+ 135   4                                      DisplayData[5]=0x40;
+ 136   4                                      DisplayData[6]=0x40;
+ 137   4                                      DisplayData[7]=0x40;
+ 138   4                              }
+ 139   3                      }
+ 140   2                      DigDisplay(digit);
+ 141   2              }
+ 142   1      }
+ 143          
+ 144          void operatError(char msgprm){
+ 145   1              if(msgprm & MG_REPAINT){
+ 146   2                      DisplayData[0]=0x00;
+ 147   2                      DisplayData[1]=0x50;
+ 148   2                      DisplayData[2]=0x5c;
+ 149   2                      DisplayData[3]=0x50;
+ 150   2                      DisplayData[4]=0x50;
+ 151   2                      DisplayData[5]=0x79;
+ 152   2                      DisplayData[6]=0x00;
+ 153   2                      DisplayData[7]=0x00;  /*"  Error "*/
+ 154   2              }
+ 155   1              Beep();
+ 156   1              DigDisplay(8);
+ 157   1      }
+ 158          
+ 159          void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword){
+ 160   1              static long tmppw=-1;
+ 161   1              switch((*pmodel)&MD_CONF){
+ 162   2                      case(MD_NORM):
+ 163   2                              if((*pdigit<8)||(*pbuf!=*Ppassword)){
+ 164   3                                      *pmodel |= MD_ERRO;
+ 165   3                              }
+ 166   2                              else {
+ 167   3                                      GLED=0; //绿指示灯亮
+ 168   3                                      RELAY=0;
+ 169   3                              //      *pmodel |= MD_COMI;
+ 170   3                              }
+ 171   2                      break;
+ 172   2                      case(MD_ORGN):
+ 173   2                              if((*pdigit<8)||(*pbuf!=*Ppassword)){
+ 174   3                                      *pmodel |= MD_ERRO;
+ 175   3                              }
+ 176   2                              else {
+ 177   3                                      ++(*pmodel);
+ 178   3                              }
+ 179   2                      break;
+C51 COMPILER V7.10   MAIN                                                                  06/22/2016 18:20:46 PAGE 4   
+
+ 180   2                      case(MD_NEWP):
+ 181   2                              if(*pdigit<8){
+ 182   3                                      *pmodel |= MD_ERRO;
+ 183   3                              }
+ 184   2                              else {
+ 185   3                                      tmppw=*pbuf;
+ 186   3                                      ++(*pmodel);
+ 187   3                              }
+ 188   2                      break;
+ 189   2                      case(MD_CONF):
+ 190   2                              if((*pdigit<8)||(*pbuf!=tmppw)){
+ 191   3                                      *pmodel |= MD_ERRO;
+ 192   3                              }
+ 193   2                              else {
+ 194   3                                      *Ppassword=tmppw;
+ 195   3                                      savePassword(Ppassword);
+ 196   3                                      tmppw=-1;
+ 197   3                                      *pmodel &= MD_NORM;
+ 198   3                              }
+ 199   2                      break;
+ 200   2              }
+ 201   1              *pdigit=0;
+ 202   1              *pbuf=0;
+ 203   1      }
+ 204          
+ 205          /*************************
+ 206          矩阵键盘按键分布连接示意图
+ 207                  1-      S1      S2      S3      S4
+ 208                  2-      S5      S6      S7      S8
+ 209                  3-      S9      S10     S11     S12
+ 210                  4-      S13     S14     S15     S16
+ 211                          |       |       |       |
+ 212                  P2      5       6       7       8
+ 213          **************************/
+ 214          char KeyScan()
+ 215          {
+ 216   1              char KeyValue=0;
+ 217   1              GPIO_KEY=0xf0;
+ 218   1              if(GPIO_KEY!=0xf0)
+ 219   1              {
+ 220   2                      Delay1ms(10);
+ 221   2                      if(GPIO_KEY!=0xf0)
+ 222   2                      {
+ 223   3                              unsigned int a=0;
+ 224   3                              //测试行
+ 225   3                              GPIO_KEY=0Xf0;
+ 226   3                              switch(GPIO_KEY)
+ 227   3                              {
+ 228   4                                      case(0X70):     KeyValue=1;break;
+ 229   4                                      case(0Xb0):     KeyValue=5;break;
+ 230   4                                      case(0Xd0): KeyValue=9;break;
+ 231   4                                      case(0Xe0):     KeyValue=13;break;
+ 232   4                                      default:        return(0);       //跳过错误操作
+ 233   4                              }
+ 234   3                              //测试列
+ 235   3                              GPIO_KEY=0X0f;
+ 236   3                              switch(GPIO_KEY)
+ 237   3                              {
+ 238   4                                      case(0X0e):     KeyValue=KeyValue+3;break;
+ 239   4                                      case(0X0d):     KeyValue=KeyValue+2;break;
+ 240   4                                      case(0X0b): KeyValue=KeyValue+1;break;
+ 241   4                                      case(0X07):     KeyValue=KeyValue;break;
+C51 COMPILER V7.10   MAIN                                                                  06/22/2016 18:20:46 PAGE 5   
+
+ 242   4                                      default:        return(0);  //跳过错误操作
+ 243   4                              }
+ 244   3                              if(KeyValue!=K_SHOW){
+ 245   4                                      while((a<10)&&(GPIO_KEY!=0x0f))  //按键松手检测
+ 246   4                                      {
+ 247   5                                              Delay1ms(50);
+ 248   5                                              ++a;
+ 249   5                                      }
+ 250   4                              }
+ 251   3                      }
+ 252   2              }
+ 253   1              return KeyValue;
+ 254   1      }
+ 255          
+ 256          void DigDisplay(unsigned char t)
+ 257          {
+ 258   1              unsigned char i ,j;
+ 259   1              for(i=0;i<t;++i){
+ 260   2                      switch(i)        //位选，选择点亮的数码管，
+ 261   2                      {
+ 262   3                              case(0):
+ 263   3                                      LSA=1;LSB=1;LSC=1; break;//显示第0位
+ 264   3                              case(1):
+ 265   3                                      LSA=0;LSB=1;LSC=1; break;//显示第1位
+ 266   3                              case(2):
+ 267   3                                      LSA=1;LSB=0;LSC=1; break;//显示第2位
+ 268   3                              case(3):
+ 269   3                                      LSA=0;LSB=0;LSC=1; break;//显示第3位
+ 270   3                              case(4):
+ 271   3                                      LSA=1;LSB=1;LSC=0; break;//显示第4位
+ 272   3                              case(5):
+ 273   3                                      LSA=0;LSB=1;LSC=0; break;//显示第5位
+ 274   3                              case(6):
+ 275   3                                      LSA=1;LSB=0;LSC=0; break;//显示第6位
+ 276   3                              case(7):
+ 277   3                                      LSA=0;LSB=0;LSC=0; break;//显示第7位    
+ 278   3                      }
+ 279   2                      GPIO_DIG=DisplayData[i];//发送段码
+ 280   2                      j=50;                                    //扫描间隔时间设定
+ 281   2                      while(--j);     
+ 282   2                      GPIO_DIG=0x00;//消隐
+ 283   2              }
+ 284   1      }
+ 285          
+ 286          void Delay1ms(unsigned int c)
+ 287          {
+ 288   1          unsigned char a, b;
+ 289   1          for (;c>0;c--)
+ 290   1              {
+ 291   2                      for (b=38;b>0;b--)
+ 292   2                      {
+ 293   3                              for (a=13;a>0;a--);
+ 294   3                      }          
+ 295   2              }       
+ 296   1      }
+ 297          
+ 298          void Beep()
+ 299          {
+ 300   1              unsigned char j, k;
+ 301   1              for(j=0;j<10;j++){
+ 302   2                      for(k=0;k<20;k++){
+ 303   3                              bee=0;
+C51 COMPILER V7.10   MAIN                                                                  06/22/2016 18:20:46 PAGE 6   
+
+ 304   3                      }
+ 305   2                      for(k=0;k<20;k++){
+ 306   3                              bee=1;
+ 307   3                      }
+ 308   2              }
+ 309   1      }
+ 310          
+ 311          
+ 312          void savePassword(long *Ppassword)
+ 313          {
+ 314   1              uchar num0,num1,num2,num3;
+ 315   1              num0=*((uchar *)(Ppassword));
+ 316   1              num1=*((uchar *)(Ppassword)+1);
+ 317   1              num2=*((uchar *)(Ppassword)+2);
+ 318   1              num3=*((uchar *)(Ppassword)+3);
+ 319   1              At24c02Write(0,num0);
+ 320   1              Delay1ms(50);  //间隔也许可以更小一点，但不能没有
+ 321   1              At24c02Write(1,num1);
+ 322   1              Delay1ms(50);
+ 323   1              At24c02Write(2,num2);
+ 324   1              Delay1ms(50);
+ 325   1              At24c02Write(3,num3);
+ 326   1              Delay1ms(50);
+ 327   1      }
+ 328          
+ 329          void readPassword(long *Ppassword)
+ 330          {
+ 331   1              uchar *p=(uchar *)(Ppassword);//p现在指向的是password的第一个字节
+ 332   1              *p=At24c02Read(0);
+ 333   1              p++;
+ 334   1              *p=At24c02Read(1);
+ 335   1              p++;
+ 336   1              *p=At24c02Read(2);
+ 337   1              p++;
+ 338   1              *p=At24c02Read(3);
+ 339   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1600    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     18      46
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
