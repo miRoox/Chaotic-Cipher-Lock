@@ -2,6 +2,7 @@
 #define __CCL_
 
 #include<reg51.h>
+#include<intrins.h>
 
 #define GPIO_DIG P0 //ÊýÂë¹Ü¶ÎÑ¡ P0^0-J12^8
 #define GPIO_KEY P1 //¾ØÕó¼üÅÌ P1^0-JP4^8
@@ -50,11 +51,12 @@ void operatModu(char *pmodel,MSG msg,long *Ppassword);
 void operatError(char msgprm);
 void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword);
 void DigDisplay(unsigned char t);
+void NumberDig(long num,const unsigned char ary);
 
 void Delay1ms(unsigned int c);
 void Beep();
 
-void savePassword(long *Ppassword);
+void savePassword(const unsigned char *oPpassword);
 void readPassword(long *Ppassword);
 
 #endif

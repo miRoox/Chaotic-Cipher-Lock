@@ -1,5 +1,3 @@
-#include<reg51.h>
-#include<intrins.h>
 #include"ccl.h"
 #include"i2c.h"  //I2C串行总线相关
 
@@ -57,9 +55,6 @@ void inputModu(char *pmodel,MSG *pmsg)
 			if((KeyVal&0x03)==0){
 				pmsg->param |= MG_CONTROL;
 				pmsg->mdata=KeyVal>>2;
-				/*if(KeyVal==K_SHOW){
-					pmsg->param &= ~MG_REPAINT;
-				}*/
 			}
 			else if(KeyVal==K_CLS || KeyVal==K_DEL){
 				pmsg->param |= MG_CONTROL;
@@ -117,14 +112,7 @@ void operatModu(char *pmodel,MSG msg,long *Ppassword)
 		}
 		if(msg.param&MG_REPAINT){
 			if((*pmodel)&MD_SHOW){
-				DisplayData[0]=DIG_CODE[buf%10];
-				DisplayData[1]=DIG_CODE[buf%100/10];
-				DisplayData[2]=DIG_CODE[buf%1000/100];
-				DisplayData[3]=DIG_CODE[buf%10000/1000];
-				DisplayData[4]=DIG_CODE[buf%100000/10000];
-				DisplayData[5]=DIG_CODE[buf%1000000/100000];
-				DisplayData[6]=DIG_CODE[buf%10000000/1000000];
-				DisplayData[7]=DIG_CODE[buf%100000000/10000000];
+				NumberDig(buf,10);
 			}
 			else {
 				DisplayData[0]=0x40; //"-"
@@ -141,7 +129,8 @@ void operatModu(char *pmodel,MSG msg,long *Ppassword)
 	}
 }
 
-void operatError(char msgprm){
+void operatError(char msgprm)
+{
 	if(msgprm & MG_REPAINT){
 		DisplayData[0]=0x00;
 		DisplayData[1]=0x50;
@@ -156,7 +145,8 @@ void operatError(char msgprm){
 	DigDisplay(8);
 }
 
-void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword){
+void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword)
+{
 	static long tmppw=-1;
 	switch((*pmodel)&MD_CONF){
 		case(MD_NORM):
@@ -192,7 +182,7 @@ void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword){
 			}
 			else {
 				*Ppassword=tmppw;
-				savePassword(Ppassword);
+				savePassword((unsigned char *)Ppassword);
 				tmppw=-1;
 				*pmodel &= MD_NORM;
 			}
@@ -200,6 +190,14 @@ void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword){
 	}
 	*pdigit=0;
 	*pbuf=0;
+}
+
+void NumberDig(long num,const unsigned char ary)
+{
+	char i;
+	for(i=0;i<8;i++,num/=ary){
+		DisplayData[i]=DIG_CODE[num%ary];
+	}
 }
 
 /*************************
@@ -309,31 +307,21 @@ void Beep()
 }
 
 
-void savePassword(long *Ppassword)
+void savePassword(const unsigned char *oPpassword)  /*oPpassword是指向password第一字节的指针*/
 {
-	uchar num0,num1,num2,num3;
-	num0=*((uchar *)(Ppassword));
-	num1=*((uchar *)(Ppassword)+1);
-	num2=*((uchar *)(Ppassword)+2);
-	num3=*((uchar *)(Ppassword)+3);
-	At24c02Write(0,num0);
-	Delay1ms(50);  //间隔也许可以更小一点，但不能没有
-	At24c02Write(1,num1);
-	Delay1ms(50);
-	At24c02Write(2,num2);
-	Delay1ms(50);
-	At24c02Write(3,num3);
-	Delay1ms(50);
+	unsigned char num ,i;
+	for(i=0;i<4;i++){
+		num=*(oPpassword++);
+		At24c02Write(i,num);
+		Delay1ms(50);  //间隔也许可以更小一点，但不能没有
+	}
 }
 
 void readPassword(long *Ppassword)
 {
-	uchar *p=(uchar *)(Ppassword);//p现在指向的是password的第一个字节
-	*p=At24c02Read(0);
-	p++;
-	*p=At24c02Read(1);
-	p++;
-	*p=At24c02Read(2);
-	p++;
-	*p=At24c02Read(3);
+	unsigned char i ,*p=(uchar *)(Ppassword);//p现在指向的是password的第一个字节
+	for(i=0;i<4;i++){
+		*p=At24c02Read(i);
+		p++;
+	}
 }
