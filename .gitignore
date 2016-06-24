@@ -2,11 +2,18 @@
 *.o
 *.ko
 *.obj
+*.OBJ
 *.elf
 
 # Precompiled Headers
 *.gch
 *.pch
+*.LST
+*.Opt
+*.M51
+*.plg
+*.lnp
+*.LST
 
 # Libraries
 *.lib
@@ -31,3 +38,5 @@
 # Debug files
 *.dSYM/
 *.su
+
+*.Bak

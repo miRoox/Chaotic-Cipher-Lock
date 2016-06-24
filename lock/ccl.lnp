@@ -1,5 +1,0 @@
-"STARTUP.obj",
-"main.obj",
-"i2c.obj" 
-TO "ccl" 
-RAMSIZE(256) 
