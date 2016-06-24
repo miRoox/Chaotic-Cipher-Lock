@@ -40,3 +40,6 @@
 *.su
 
 *.Bak
+
+# Special
+ccl
