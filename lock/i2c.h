@@ -25,5 +25,7 @@ uchar I2C_ReadByte();
 
 void At24c02Write(unsigned char addr,unsigned char dat);
 unsigned char At24c02Read(unsigned char addr);
+void saveAt24c02(const unsigned char *pt,const int offset,const int size);
+void loadAt24c02(unsigned char *pt,const int offset,const int size);
 
 #endif

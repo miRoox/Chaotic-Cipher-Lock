@@ -1,4 +1,4 @@
-/* FROM 普中科技 */
+/** FROM 普中科技 **/
 #include"i2c.h"
 
 /*******************************************************************************
@@ -121,9 +121,9 @@ uchar I2C_ReadByte()
 }
 
 
-/*******************
- * EEPROM 读写函数 *
- *******************/
+/******************
+ * 24C02 读写函数 *
+ ******************/
 void At24c02Write(unsigned char addr,unsigned char dat)
 {
 	I2C_Start();
@@ -145,3 +145,19 @@ unsigned char At24c02Read(unsigned char addr)
 	return num;	
 }
  
+void saveAt24c02(const unsigned char *pt,const int offset,const int size) 
+{
+	unsigned char i;
+	for(i=offset;i<size;i++){
+		unsigned char j;
+		At24c02Write(i,*(pt++));
+		for(j=0;j<255;j++) I2C_Delay10us();
+	}
+}
+void loadAt24c02(unsigned char *pt,const int offset,const int size)
+{
+	unsigned char i;
+	for(i=offset;i<size;pt++){
+		*pt=At24c02Read(i++);
+	}
+}

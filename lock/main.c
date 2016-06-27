@@ -1,14 +1,6 @@
 #include"ccl.h"
 #include"i2c.h"  //I2C串行总线相关
 
-//--定义全局变量--//
-unsigned char code DIG_CODE[17]={
-0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
-0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};
-//0、1、2、3、4、5、6、7、8、9、A、b、C、d、E、F的显示码
-unsigned char DisplayData[8];
-//用来存放要显示的8位数的值
-
 
 main()
 {
@@ -20,7 +12,7 @@ main()
 		inputModu(&model,&msg);
 		operatModu(&model,msg,&password);
 	}
-	return 0;
+	return(0);
 }
 
 void initialize(long *Ppassword)
@@ -35,7 +27,7 @@ void initialize(long *Ppassword)
 	DisplayData[6]=0x00;
 	DisplayData[7]=0x00;
 	DigDisplay(8);
-	readPassword(Ppassword);
+	loadAt24c02((unsigned char *)Ppassword,0,sizeof(long));
 }
 
 void inputModu(char *pmodel,MSG *pmsg)
@@ -182,7 +174,7 @@ void operatConfirm(char *pmodel,char *pdigit,long *pbuf,long *Ppassword)
 			}
 			else {
 				*Ppassword=tmppw;
-				savePassword((unsigned char *)Ppassword);
+				saveAt24c02((unsigned char *)Ppassword,0,sizeof(long));
 				tmppw=-1;
 				*pmodel &= MD_NORM;
 			}
@@ -248,34 +240,16 @@ char KeyScan()
 			}
 		}
 	}
-	return KeyValue;
+	return(KeyValue);
 }
 
 void DigDisplay(unsigned char t)
 {
 	unsigned char i ,j;
 	for(i=0;i<t;++i){
-		switch(i)	 //位选，选择点亮的数码管，
-		{
-			case(0):
-				LSA=1;LSB=1;LSC=1; break;//显示第0位
-			case(1):
-				LSA=0;LSB=1;LSC=1; break;//显示第1位
-			case(2):
-				LSA=1;LSB=0;LSC=1; break;//显示第2位
-			case(3):
-				LSA=0;LSB=0;LSC=1; break;//显示第3位
-			case(4):
-				LSA=1;LSB=1;LSC=0; break;//显示第4位
-			case(5):
-				LSA=0;LSB=1;LSC=0; break;//显示第5位
-			case(6):
-				LSA=1;LSB=0;LSC=0; break;//显示第6位
-			case(7):
-				LSA=0;LSB=0;LSC=0; break;//显示第7位	
-		}
+		LSA=~i&0x01;LSB=(~i&0x02)>>1;LSC=(~i&0x04)>>2;//位选，选择点亮的数码管
 		GPIO_DIG=DisplayData[i];//发送段码
-		j=50;					 //扫描间隔时间设定
+		j=80;					 //扫描间隔时间设定
 		while(--j);	
 		GPIO_DIG=0x00;//消隐
 	}
@@ -284,13 +258,13 @@ void DigDisplay(unsigned char t)
 void Delay1ms(unsigned int c)
 {
     unsigned char a, b;
-    for (;c>0;c--)
+    for(;c>0;c--)
 	{
-		for (b=38;b>0;b--)
+		for(b=199;b>0;b--)
 		{
-			for (a=13;a>0;a--);
-		}          
-	}       
+		  	for(a=1;a>0;a--);
+		}
+	}
 }
 
 void Beep()
@@ -303,25 +277,5 @@ void Beep()
 		for(k=0;k<20;k++){
 			bee=1;
 		}
-	}
-}
-
-
-void savePassword(const unsigned char *oPpassword)  /*oPpassword是指向password第一字节的指针*/
-{
-	unsigned char num ,i;
-	for(i=0;i<4;i++){
-		num=*(oPpassword++);
-		At24c02Write(i,num);
-		Delay1ms(50);  //间隔也许可以更小一点，但不能没有
-	}
-}
-
-void readPassword(long *Ppassword)
-{
-	unsigned char i ,*p=(uchar *)(Ppassword);//p现在指向的是password的第一个字节
-	for(i=0;i<4;i++){
-		*p=At24c02Read(i);
-		p++;
 	}
 }
