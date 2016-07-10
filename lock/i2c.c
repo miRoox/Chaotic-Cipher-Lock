@@ -8,7 +8,7 @@
 * 输    出         : 无
 *******************************************************************************/
 
-void I2C_Delay10us()
+static void I2C_Delay10us()
 {
 	uchar a, b;
 	for(b=1; b>0; b--)
@@ -24,7 +24,7 @@ void I2C_Delay10us()
 * 备    注         : 起始之后I2C_SDA和I2C_SCL都为0
 *******************************************************************************/
 
-void I2C_Start()
+static void I2C_Start()
 {
 	I2C_SDA = 1;
 	I2C_Delay10us();
@@ -43,7 +43,7 @@ void I2C_Start()
 * 备    注           : 结束之后保持I2C_SDA和I2C_SCL都为1；表示总线空闲
 *******************************************************************************/
 
-void I2C_Stop()
+static void I2C_Stop()
 {
 	I2C_SDA = 0;
 	I2C_Delay10us();
@@ -61,7 +61,7 @@ void I2C_Stop()
 * 备    注           : 发送完一个字节I2C_SCL=0, 需要应答则应答设置为1，否则为0
 *******************************************************************************/
 
-uchar I2C_SendByte(uchar dat, uchar ack)
+static uchar I2C_SendByte(uchar dat, uchar ack)
 {
 	uchar a = 0,b = 0;//最大255，一个机器周期为1us，最大延时255us。
 			
@@ -102,7 +102,7 @@ uchar I2C_SendByte(uchar dat, uchar ack)
 * 备    注           : 接收完一个字节I2C_SCL=0
 *******************************************************************************/
 
-uchar I2C_ReadByte()
+static uchar I2C_ReadByte()
 {
 	uchar a = 0,dat = 0;
 	I2C_SDA = 1;			//起始和发送一个字节之后I2C_SCL都是0
@@ -143,21 +143,4 @@ unsigned char At24c02Read(unsigned char addr)
 	num=I2C_ReadByte(); //读取数据
 	I2C_Stop();
 	return num;	
-}
- 
-void saveAt24c02(const unsigned char *pt,const int offset,const int size) 
-{
-	unsigned char i;
-	for(i=offset;i<size;i++){
-		unsigned char j;
-		At24c02Write(i,*(pt++));
-		for(j=0;j<255;j++) I2C_Delay10us();
-	}
-}
-void loadAt24c02(unsigned char *pt,const int offset,const int size)
-{
-	unsigned char i;
-	for(i=offset;i<size;pt++){
-		*pt=At24c02Read(i++);
-	}
 }

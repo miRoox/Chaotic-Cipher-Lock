@@ -8,6 +8,8 @@ Group (Source Group 1)
 File 1,2,<.\STARTUP.A51><STARTUP.A51> 0x0 
 File 1,1,<.\main.c><main.c> 0x0 
 File 1,1,<.\i2c.c><i2c.c> 0x0 
+File 1,1,<.\lcd.c><lcd.c> 0x0 
+File 1,1,<.\io.c><io.c> 0x0 
 
 
 Options 1,0,0  // Target 'Target 1'
@@ -46,7 +48,7 @@ Options 1,0,0  // Target 'Target 1'
  BrunUsr 0 0 <>
  BrunUsr 1 0 <>
  SVCSID <>
- MODEL5=0
+ MODEL5=2
  RTOS5=0
  ROMSZ5=2
  DHOLD5=0
@@ -62,7 +64,7 @@ Options 1,0,0  // Target 'Target 1'
  IRA51 { 0,0,0,0,0,0,1,0,0 }
  XRA51 { 0,0,0,0,0,0,7,0,0 }
  XRA512 { 0,0,0,0,0,0,0,0,0 }
- C51FL=21646608
+ C51FL=21630224
  C51VA=0
  C51MSC ()
  C51DEF ()
