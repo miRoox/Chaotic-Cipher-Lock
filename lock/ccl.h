@@ -1,6 +1,15 @@
 #ifndef __CCL_
 #define __CCL_
-/* 芯片型号： STC90C516RD+ */
+/** 芯片型号： STC90C516RD+ **/
+/******** 接线 ***************
+ * P0 口接LCD1602的 DB0~DB7
+ * P1 口接矩阵键盘，详见io.c
+ * 蜂鸣器接 P2.2
+ * 继电器接 P2.3
+ * LCD的 RW 接 P2.5
+ * LCD的 RS 接 P2.6
+ * LCD的 E 接 P2.7
+ *****************************/
 
 #include<reg51.h>
 #include"io.h"

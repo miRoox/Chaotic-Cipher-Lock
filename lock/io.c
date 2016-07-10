@@ -40,7 +40,7 @@ void write(const unsigned char *pt,const int addr,const int size)
 	unsigned char i;
 	for(i=addr;i<size;i++){
 		At24c02Write(i,*(pt++));
-		Delay1ms(1);
+		Delay1ms(10);
 	}
 }
 void read(unsigned char *pt,const int addr,const int size)
@@ -48,6 +48,7 @@ void read(unsigned char *pt,const int addr,const int size)
 	unsigned char i;
 	for(i=addr;i<size;pt++){
 		*pt=At24c02Read(i++);
+		Delay1ms(10);
 	}
 }
 
@@ -120,7 +121,7 @@ int myPrintf(const char *fmt, ...)
 	3-	S9	S10	S11	S12
 	4-	S13	S14	S15	S16
 		|	|	|	|
-	P2	5	6	7	8
+	P1	5	6	7	8
 **************************/
 static char KeyScan()
 {

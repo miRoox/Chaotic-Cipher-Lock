@@ -37,6 +37,7 @@ char MsgProc(unsigned char message,unsigned char param)
 		switch(param){
 			case(OPR_OPEN):
 			RELAY=0; //¿ª¼ÌµçÆ÷
+			myPrintf("\fSuccess!");
 			Delay1ms(5000);
 			PostMsg(MG_QUIT,0);
 			break;
