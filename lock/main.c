@@ -120,6 +120,7 @@ void operatConfirm(char *pmodel,char *ibuf,char *password)
 		break;
 		case(MD_NEWP):
 			strncpy(password,ibuf,PWLEN);
+			++(*pmodel);
 		break;
 		case(MD_CONF):
 			if(strncmp(ibuf,password,PWLEN)){
@@ -135,10 +136,10 @@ void operatConfirm(char *pmodel,char *ibuf,char *password)
 	PostMsg(MG_COMMAND,OPR_CLS);
 }
 
-
+/*
 const float k=3.983271;
 float logistic(float x)
 {
 	return k*x*(1-x);
 }
-
+*/

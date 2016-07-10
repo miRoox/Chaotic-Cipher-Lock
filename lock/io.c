@@ -72,17 +72,12 @@ void error(unsigned int errno)
 	NoBufferPrint("\fError:\n");
 	switch(errno){
 		case(EPERM):NoBufferPrint("Operation not permitted");break;
-		case(ENOENT):NoBufferPrint("No such file or directory");break;
 		case(EINTR):NoBufferPrint("Interrupted system call");break;
 		case(EIO):NoBufferPrint("I/O error");break;
 		case(E2BIG):NoBufferPrint("Argument list too long");break;
-		case(EBADF):NoBufferPrint("Bad file number");break;
 		case(ENOMEM):NoBufferPrint("Out of memory");break;
 		case(EFAULT):NoBufferPrint("Bad address");break;
 		case(EINVAL):NoBufferPrint("Invalid argument");break;
-		case(ENFILE):NoBufferPrint("File table overflow");break;
-		case(EMFILE):NoBufferPrint("Too many open files");break;
-		case(EFBIG):NoBufferPrint("File too large");break;
 		case(ENODATA):NoBufferPrint("No data available");break;
 		case(ENOBUFS):NoBufferPrint("No buffer space available");break;
 		case(EREMOTEIO):NoBufferPrint("Remote I/O error");break;
@@ -103,7 +98,7 @@ int myPrintf(const char *fmt, ...)
 	if(len>BUFSIZE){
 		memset(pbuf,0,len);
 		len=EOF;
-		PostMsg(MG_ERROR,ENOMEM);
+		PostMsg(MG_ERROR,ENOBUFS);
 	}
 	else {
 		LcdCursorShow(OFF);
@@ -169,9 +164,7 @@ static void InputScanner()
 {
 	if(inputset&IS_KEY){
 		char data keyval=KeyScan();
-		//myPrintf("k\b");
 		if(keyval){
-			//myPrintf("%c",keyval+'0');
 			PostMsg(MG_KEYDOWN,keyval);
 		}
 	}
@@ -219,7 +212,6 @@ void PostMsg(unsigned char message,unsigned char param)
 			for(pr=msgHead;pr->next!=NULL;pr=pr->next);
 			pr->next=p;
 		}
-		//myPrintf("P");
 		p->message=message;
 		p->param=param;
 		p->next=NULL;
@@ -294,7 +286,6 @@ char GetMsg()
 	while(NULL==msgHead);//无消息时阻塞
 	pr=msgHead;
 	n=TranslateMsg(pr);
-	//myPrintf("G");
 	RemoveMsg(pr);
 	return(n);
 }
@@ -316,7 +307,6 @@ char TranslateMsg(const MSG *pmsg)
 				PushMsg(MG_ERROR|MTAG_TRANS,pmsg->param);
 				break;
 				case(MG_KEYDOWN):
-				//myPrintf("T");
 				switch(pmsg->param){
 					case(K_CONF):
 					PostMsg(MG_COMMAND|MTAG_TRANS,OPR_CONF);

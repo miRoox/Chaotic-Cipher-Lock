@@ -111,6 +111,7 @@ void error(unsigned int errno);
 int myPrintf(const char *fmt, ...);
 
 static char KeyScan();
+static void InputScanner();
 
 void InitMsg();
 void PostMsg(unsigned char message,unsigned char param);
