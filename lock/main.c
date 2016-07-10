@@ -134,3 +134,11 @@ void operatConfirm(char *pmodel,char *ibuf,char *password)
 	}
 	PostMsg(MG_COMMAND,OPR_CLS);
 }
+
+
+const float k=3.983271;
+float logistic(float x)
+{
+	return k*x*(1-x);
+}
+
