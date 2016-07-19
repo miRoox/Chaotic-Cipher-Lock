@@ -21,6 +21,7 @@ char MsgProc(unsigned char message,unsigned char param)
 		case(MG_ERROR):
 		inputset &= ~IS_KEY;
 		error(param);
+		Delay1ms(1000);
 		switch(param){
 			case(EPSW):case(EPSW2):
 			{
@@ -38,7 +39,7 @@ char MsgProc(unsigned char message,unsigned char param)
 			case(OPR_OPEN):
 			RELAY=0; //开继电器
 			myPrintf("\fSuccess!");
-			Delay1ms(5000);
+			Delay1ms(1000);
 			PostMsg(MG_QUIT,0);
 			break;
 			case(OPR_CONF):
@@ -53,17 +54,20 @@ char MsgProc(unsigned char message,unsigned char param)
 			if(MD_NORM==(model&MD_CONF)){
 				model |= MD_ORGN;
 			}
-			PostMsg(MG_COMMAND,OPR_CLS);
+			PostMsg(MG_COMMAND,OPR_CLS);                     
 			break;
 			case(OPR_CLS):
 			memset(ibuf,'\0',PWLEN);
 			cnt=0;
 			LcdCls();
-			switch(model){
+			if(inputset&IS_KEY)switch(model){
 				case(MD_NORM):myPrintf("Enter PW:\n");break;
 				case(MD_ORGN):myPrintf("Enter origin PW:\n");break;
 				case(MD_NEWP):myPrintf("Enter new PW:\n");break;
 				case(MD_CONF):myPrintf("Re-enter PW:\n");break;
+			}
+			if(inputset&IS_COM){
+				myPrintf("Wait for connect");
 			}
 			break;
 			case(OPR_DEL):
@@ -72,6 +76,8 @@ char MsgProc(unsigned char message,unsigned char param)
 			break;
 			case(OPR_COMON):
 			inputset &= ~IS_KEY;
+			UsartConfig();
+			//PostMsg(MG_SDDAT,0xff);//提示钥匙可以开始发信了
 			inputset |= IS_COM;
 			break;
 		}
@@ -84,6 +90,53 @@ char MsgProc(unsigned char message,unsigned char param)
 		case(MG_CHNECHO):
 		set_echo(param,cnt,ibuf);
 		break;
+		case(MG_SDDAT):
+		/*SendByte(param);*/
+		/*{
+			char xdata tm;
+			float xdata pref=0.3014568;
+			for(tm=0;tm<7;tm++){
+				myPrintf("\fL: %.6f\nK: %.6f",pref,pref);
+				pref=logistic(pref);
+				Delay1ms(500);
+			}
+			PostMsg(MG_COMMAND,OPR_OPEN);
+		}*/
+		break;
+		case(MG_RCDAT):
+		//myPrintf("%X",param);
+		ibuf[cnt++]=param;
+		if(cnt>=sizeof(float)){
+			static float xdata pref=0;
+			if(0==inputset&7){
+				pref=*(float *)ibuf;
+			}
+			else {
+				pref=logistic(pref);
+			}
+			cnt=0;
+			inputset++;//低3位记通信的次数
+			myPrintf("\fL: %.6f\nK: %.6f",pref,*(float *)ibuf);
+			Delay1ms(500);
+			if(fabs(*(float *)ibuf-pref)<EPS){
+				memset(ibuf,0,sizeof(float));
+				if(7==inputset&7){
+					PostMsg(MG_COMMAND,OPR_OPEN);
+				}
+				else {
+					REN=1;
+					//PostMsg(MG_SDDAT,0xff);//提示钥匙可以开始发信了
+				}
+			}
+			else {
+				PushMsg(MG_ERROR,EPSW2);
+			}
+		}
+		else {
+			REN=1;
+			//PostMsg(MG_SDDAT,0xff);//提示钥匙可以开始发信了
+		}
+		break;
 		default:
 		;
 	}
@@ -95,7 +148,7 @@ void initialize(char *password)
 	LcdInit();
 	read(password,00,PWLEN);
 	inputset |= IS_KEY;
-	myPrintf("Enter PW:\n");
+	PostMsg(MG_COMMAND,OPR_CLS);
 }
 
 void operatConfirm(char *pmodel,char *ibuf,char *password)
@@ -106,8 +159,8 @@ void operatConfirm(char *pmodel,char *ibuf,char *password)
 				PushMsg(MG_ERROR,EPSW);
 			}
 			else {
-				//PostMsg(MG_COMMAND,OPR_COMON);
-				PostMsg(MG_COMMAND,OPR_OPEN);
+				PostMsg(MG_COMMAND,OPR_COMON);
+				//PostMsg(MG_COMMAND,OPR_OPEN);
 			}
 		break;
 		case(MD_ORGN):
@@ -136,10 +189,10 @@ void operatConfirm(char *pmodel,char *ibuf,char *password)
 	PostMsg(MG_COMMAND,OPR_CLS);
 }
 
-/*
-const float k=3.983271;
+
+const float code k=3.983271;
 float logistic(float x)
 {
 	return k*x*(1-x);
 }
-*/
+

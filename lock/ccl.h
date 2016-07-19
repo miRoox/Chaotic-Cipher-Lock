@@ -13,6 +13,7 @@
 
 #include<reg51.h>
 #include"io.h"
+#include<math.h>
 
 // - model -
 #define MD_NORM 0x00 //普通，键入密码
@@ -22,10 +23,13 @@
 
 #define PWLEN 16
 
+#define EPS 1e-6
+
 unsigned char data inputset=0;
 
 // - 函数原型 -
 void initialize(char *password);
 void operatConfirm(char *pmodel,char *ibuf,char *password);
+float logistic(float x);
 
 #endif

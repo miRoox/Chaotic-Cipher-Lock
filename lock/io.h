@@ -16,6 +16,7 @@
 #define GPIO_KEY P1 //矩阵键盘 P1^0-JP4^8
 sbit bee=P2^2;  //蜂鸣器
 sbit RELAY=P2^3; //继电器
+sbit RS485E=P3^7;   //RS485的使能脚
 
 sfr ISP_CONTR=0xe7;
 
@@ -47,9 +48,12 @@ sfr ISP_CONTR=0xe7;
 #define T16BH(x) HIBYTE(0x10000-(x)/(12/SOL))
 #define T16BL(x) LOBYTE(0x10000-(x)/(12/SOL))
 
+/*  */
+
 extern unsigned char data inputset;
-#define IS_KEY 0x01  //键盘
+#define IS_KEY 0x40  //键盘
 #define IS_COM 0x10  //串口
+#define IS_CMI 0x20  //串口数据输入
 
 // - keyval -
 #define K_CONF 16 //确认键
@@ -74,7 +78,8 @@ extern volatile MSG xdata * msgHead;
 #define MG_COMMAND 4
 #define MG_CHAR    5
 #define MG_CHNECHO 6
-#define MG_COM     7
+#define MG_RCDAT   7
+#define MG_SDDAT   8
 
 // - command -
 #define OPR_OPEN 0
@@ -124,5 +129,8 @@ extern char MsgProc(unsigned char message,unsigned char param);
 
 char set_echo(char c,char cnt,char *buf);
 char echo(char c);
+
+void UsartConfig();
+//void SendByte(unsigned char dat);
 
 #endif

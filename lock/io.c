@@ -169,7 +169,16 @@ static void InputScanner()
 		}
 	}
 	if(inputset&IS_COM){
-		;
+		if(inputset&IS_CMI){
+			char data RDat=SBUF;
+			REN=0;
+			PostMsg(MG_RCDAT,RDat);
+		}
+		else {
+			/*RS485E=0; // RS5485E=0为接收状态  RS5485E=1为发送状态
+			Delay1ms(32);*/
+			;
+		}
 	}
 }
 
@@ -392,3 +401,33 @@ char echo(char c)
 	}
 	return(shc);
 }
+
+
+void UsartConfig()
+{
+	SCON = 0X50;			//REN=1 SM1=1 ,设置为工作方式1
+	TMOD |= M8BTA1;			//设置计数器工作方式2(8位自动重装定时器)
+	PCON |= 0X80;			// SCOM=1 ,波特率加倍
+	TH1  = 0xFD;
+	TR1  = 1;         //打开计数器                                            
+	ES   = 1;        //开串口中断                  
+	EA   = 1;        // 开总中断 
+}
+
+void RecieveData(void) interrupt 4 using 1
+{
+	if(1==RI){
+		inputset |= IS_COM;
+		RI=0; //清除RI接受中断标志
+	}
+}
+
+/*void SendByte(unsigned char dat)
+{
+	RS485E=1; 	  // RS5485E=0为接收状态  RS5485E=1为发送状态
+	SBUF=dat;	   //发送数据
+	while(!TI);		  //等待发送数据完成
+	TI=0;			  //清除发送完成标志位
+	Delay1ms(1);
+	RS485E=0;
+}*/
