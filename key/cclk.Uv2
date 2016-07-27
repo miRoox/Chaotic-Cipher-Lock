@@ -7,7 +7,6 @@ Group (Source Group 1)
 
 File 1,2,<.\STARTUP.A51><STARTUP.A51> 0x0 
 File 1,1,<.\main.c><main.c> 0x0 
-File 1,1,<.\lcd.c><lcd.c> 0x0 
 
 
 Options 1,0,0  // Target 'Target 1'

@@ -23,7 +23,6 @@ void Delay1ms(unsigned int c)
 void Beep()
 {
 	unsigned char j, k;
-	//EA=0;//防止重入
 	for(j=0;j<50;j++){
 		for(k=0;k<20;k++){
 			bee=0;
@@ -32,7 +31,6 @@ void Beep()
 			bee=1;
 		}
 	}
-	//EA=1;
 }
 
 void write(const unsigned char *pt,const int addr,const int size) 
@@ -175,9 +173,8 @@ static void InputScanner()
 			PostMsg(MG_RCDAT,RDat);
 		}
 		else {
-			/*RS485E=0; // RS5485E=0为接收状态  RS5485E=1为发送状态
-			Delay1ms(32);*/
-			;
+			RS485E=0; // RS5485E=0为接收状态  RS5485E=1为发送状态
+			Delay1ms(1);
 		}
 	}
 }
@@ -206,7 +203,6 @@ void PostMsg(unsigned char message,unsigned char param)
 {
 	lpMSG p=NULL, pr;
 	p=(lpMSG)malloc(sizeof(MSG));
-	//EA=0;//防止重入
 	if(NULL==p){
 		error(ENOMEM);
 		ClearMsg();
@@ -225,7 +221,6 @@ void PostMsg(unsigned char message,unsigned char param)
 		p->param=param;
 		p->next=NULL;
 	}
-	//EA=1;
 }
 
 //直接将消息推到队列的最前
@@ -233,7 +228,6 @@ void PushMsg(unsigned char message,unsigned char param)
 {
 	lpMSG p=NULL;
 	p=(lpMSG)malloc(sizeof(MSG));
-	//EA=0;//防止重入
 	if(NULL==p){
 		error(ENOMEM);
 		ClearMsg();
@@ -246,7 +240,6 @@ void PushMsg(unsigned char message,unsigned char param)
 		p->next=msgHead;
 		msgHead=p;
 	}
-	//EA=1;
 }
 
 //删除队列里的一个消息

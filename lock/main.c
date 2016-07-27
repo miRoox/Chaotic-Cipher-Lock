@@ -104,8 +104,8 @@ char MsgProc(unsigned char message,unsigned char param)
 		}*/
 		break;
 		case(MG_RCDAT):
-		//myPrintf("%X",param);
 		ibuf[cnt++]=param;
+		Beep();
 		if(cnt>=sizeof(float)){
 			static float xdata pref=0;
 			if(0==inputset&7){
@@ -117,7 +117,6 @@ char MsgProc(unsigned char message,unsigned char param)
 			cnt=0;
 			inputset++;//低3位记通信的次数
 			myPrintf("\fL: %.6f\nK: %.6f",pref,*(float *)ibuf);
-			Delay1ms(500);
 			if(fabs(*(float *)ibuf-pref)<EPS){
 				memset(ibuf,0,sizeof(float));
 				if(7==inputset&7){
