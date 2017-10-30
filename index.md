@@ -173,6 +173,8 @@ description: "大一年度项目：混沌电子密码锁"
 
 ![overview](/resource/overview.png)
 
+[演示视频](https://github.com/miRoox/Chaotic-Cipher-Lock/blob/gh-pages/resource/demo.MP4?raw=true)
+
 ## 创新点
 
 当前广泛应用于各种领域的电子密码锁都是基于单片机或PLC等，通用的加密算法几乎都可以被破译，
