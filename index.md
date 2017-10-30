@@ -117,10 +117,13 @@ description: "大一年度项目：混沌电子密码锁"
 
 ### 3.矩阵键盘部分
 
-<table border="1" width="300">
+<table>
+  <thead>
     <tr>
         <td colspan="4" align="center">键盘功能设计</td>
     </tr>
+  </thead>
+  <tbody>
     <tr>
         <td>1</td>
         <td>2</td>
@@ -145,6 +148,7 @@ description: "大一年度项目：混沌电子密码锁"
         <td>C</td>
         <td>确认</td>
     </tr>
+  </tbody>
 </table>
 
 先设定若干位初始密码，由矩阵键盘输入第一重密码，输入正确则进入混沌序列比对，错误则蜂鸣器会发出警报。
